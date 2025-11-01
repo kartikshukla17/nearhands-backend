@@ -36,7 +36,7 @@ exports.getAll = async (req, res) => {
     const users = await User.findAll();
     return res.status(200).json(users);
   } catch (error) {
-    console.error('❌ Error fetching users:', error);
+    console.error(' Error fetching users:', error);
     return res.status(500).json({ message: 'Internal server error', error });
   }
 };
@@ -67,7 +67,7 @@ exports.update = async (req, res) => {
     const updatedUser = await User.findByPk(id);
     return res.status(200).json({ message: 'User updated successfully', user: updatedUser });
   } catch (error) {
-    console.error('❌ Error updating user:', error);
+    console.error(' Error updating user:', error);
     return res.status(500).json({ message: 'Internal server error', error });
   }
 };
@@ -82,7 +82,7 @@ exports.delete = async (req, res) => {
 
     return res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error('❌ Error deleting user:', error);
+    console.error(' Error deleting user:', error);
     return res.status(500).json({ message: 'Internal server error', error });
   }
 };
@@ -97,7 +97,7 @@ exports.getProfile = async (req, res) => {
 
     return res.status(200).json(user);
   } catch (error) {
-    console.error('❌ Error fetching profile:', error);
+    console.error(' Error fetching profile:', error);
     return res.status(500).json({ message: 'Internal server error', error });
   }
 };
