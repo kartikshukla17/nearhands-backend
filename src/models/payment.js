@@ -43,6 +43,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         defaultValue: 'pending',
       },
+      is_deleted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+
     },
     {
       tableName: 'payments',

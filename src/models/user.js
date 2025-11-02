@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        firebaseUid: {
+        firebase_uid: {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
@@ -54,7 +54,14 @@ module.exports = (sequelize, DataTypes) => {
         timestamps: true,
     });
 
-    
+    User.associate = (models) => {
+        // A user can have many service requests
+        User.hasMany(models.ServiceRequest, {
+            foreignKey: 'user_id',
+            as: 'requests',
+        });
+    };
+
     return User;
 };
 

@@ -16,10 +16,10 @@ exports.create = async (req, res) => {
     } = req.body;
 
     // Firebase UID comes from middleware (decoded token)
-    const firebaseUid = req.user.uid;
+    const firebase_uid = req.user.uid;
 
     // Get the user from firebase UID
-    const user = await User.findOne({ where: { firebase_uid: firebaseUid } });
+    const user = await User.findOne({ where: { firebase_uid: firebase_uid } });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -36,7 +36,7 @@ exports.create = async (req, res) => {
     // Create the service request
     const serviceRequest = await ServiceRequest.create({
       user_id: user.id,
-      provider_id,
+      provider_id: provider_id || null,
       category,
       description,
       summary,
@@ -101,10 +101,10 @@ exports.getById = async (req, res) => {
 // Get service requests by user (GET /api/requests/user/me)
 exports.getByUser = async (req, res) => {
   try {
-    const firebaseUid = req.user.uid;
+    const firebase_uid = req.user.uid;
 
     // Get the user from firebase UID
-    const user = await User.findOne({ where: { firebase_uid: firebaseUid } });
+    const user = await User.findOne({ where: { firebase_uid: firebase_uid } });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -198,6 +198,11 @@ exports.updateStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    const allowedStatuses = ['pending', 'matched', 'in-progress', 'completed', 'cancelled'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value' });
+    }
+
     if (!status) {
       return res.status(400).json({ message: 'Status is required' });
     }
@@ -222,6 +227,7 @@ exports.updateStatus = async (req, res) => {
 };
 
 // Update payment status (PATCH /api/requests/:id/payment)
+//for razorpay integration will have to rename the path to /api/payment/webhook cause' will be writing the webhook!
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -250,11 +256,12 @@ exports.updatePaymentStatus = async (req, res) => {
   }
 };
 
-// Verify OTP (POST /api/requests/:id/verify-otp)
+// Verify OTP and update status (POST /api/requests/:id/verify-otp)
 exports.verifyOTP = async (req, res) => {
   try {
     const { id } = req.params;
-    const { otp } = req.body;
+    const { otp, type } = req.body; 
+    // type = 'start' or 'complete' to specify what OTP is for
 
     if (!otp) {
       return res.status(400).json({ message: 'OTP is required' });
@@ -265,39 +272,59 @@ exports.verifyOTP = async (req, res) => {
       return res.status(404).json({ message: 'Service request not found' });
     }
 
+    // Check OTP validity
     if (request.otp !== otp) {
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
-    // Update status to completed after OTP verification
-    await ServiceRequest.update(
-      { status: 'completed' },
-      { where: { id } }
-    );
+    // ✅ Decide next status
+    let newStatus;
+    if (type === 'start') newStatus = 'in-progress';
+    else if (type === 'complete') newStatus = 'completed';
+    else return res.status(400).json({ message: 'Invalid OTP type' });
 
+    await ServiceRequest.update({ status: newStatus }, { where: { id } });
     const updatedRequest = await ServiceRequest.findByPk(id);
 
-    return res.status(200).json({ 
-      message: 'OTP verified successfully', 
-      request: updatedRequest 
+    return res.status(200).json({
+      message: `OTP verified — job marked as ${newStatus}`,
+      request: updatedRequest,
     });
+
   } catch (error) {
     console.error('Error verifying OTP:', error);
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
 
+
 // Delete service request (DELETE /api/requests/:id)
 exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await ServiceRequest.destroy({ where: { id } });
 
-    if (!deleted) return res.status(404).json({ message: 'Service request not found' });
+    // Check if request exists
+    const request = await ServiceRequest.findByPk(id);
+    if (!request) {
+      return res.status(404).json({ message: 'Service request not found' });
+    }
 
-    return res.status(200).json({ message: 'Service request deleted successfully' });
+    // Prevent deleting if already completed
+    if (request.status === 'completed') {
+      return res.status(400).json({ message: 'Completed requests cannot be deleted' });
+    }
+
+    // Mark as cancelled
+    await ServiceRequest.update({ status: 'cancelled' }, { where: { id } });
+
+    const updatedRequest = await ServiceRequest.findByPk(id);
+
+    return res.status(200).json({
+      message: 'Service request cancelled successfully',
+      request: updatedRequest,
+    });
   } catch (error) {
-    console.error('Error deleting service request:', error);
+    console.error('Error cancelling service request:', error);
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };

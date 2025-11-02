@@ -1,18 +1,25 @@
 const { Rating, User, ServiceProvider } = require('../models');
 
+
 // Create a new rating (POST /api/ratings)
 exports.create = async (req, res) => {
   try {
     const { job_id, reviewee_id, rating, comment } = req.body;
 
     // Firebase UID comes from middleware (decoded token)
-    const firebaseUid = req.user.uid;
+    const firebase_uid = req.user.uid;
 
     // Get the user (reviewer) from firebase UID
-    const reviewer = await User.findOne({ where: { firebase_uid: firebaseUid } });
+    let reviewer = await User.findOne({ where: { firebase_uid: firebase_uid } });
+    let reviewer_type = 'user';
+    if (!reviewer) {
+      reviewer = await ServiceProvider.findOne({ where: { firebase_uid: firebase_uid } });
+      reviewer_type = 'provider';
+    }
     if (!reviewer) {
       return res.status(404).json({ message: 'Reviewer not found' });
     }
+
 
     // Check if rating already exists for this job
     const existing = await Rating.findOne({ 
@@ -54,6 +61,7 @@ exports.create = async (req, res) => {
 exports.getAll = async (req, res) => {
   try {
     const ratings = await Rating.findAll({
+      where: { is_deleted: false },
       include: [
         { model: User, as: 'reviewer', attributes: ['id', 'name'] },
         { model: ServiceProvider, as: 'reviewee', attributes: ['id', 'name'] },
@@ -71,6 +79,7 @@ exports.getById = async (req, res) => {
   try {
     const { id } = req.params;
     const rating = await Rating.findByPk(id, {
+      where: { is_deleted: false },
       include: [
         { model: User, as: 'reviewer', attributes: ['id', 'name'] },
         { model: ServiceProvider, as: 'reviewee', attributes: ['id', 'name'] },
@@ -90,12 +99,17 @@ exports.getById = async (req, res) => {
 exports.getByProvider = async (req, res) => {
   try {
     const { providerId } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = parseInt(req.query.offset) || 0;
     const ratings = await Rating.findAll({
+      where: { is_deleted: false },
       where: { reviewee_id: providerId },
       include: [
         { model: User, as: 'reviewer', attributes: ['id', 'name'] },
       ],
       order: [['created_at', 'DESC']],
+      limit,
+      offset
     });
 
     return res.status(200).json(ratings);
@@ -110,6 +124,7 @@ exports.getByUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const ratings = await Rating.findAll({
+      where: { is_deleted: false },
       where: { reviewer_id: userId },
       include: [
         { model: ServiceProvider, as: 'reviewee', attributes: ['id', 'name'] },
@@ -140,12 +155,7 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Rating not found' });
     }
 
-    const [updated] = await Rating.update(
-      { rating, comment },
-      { where: { id } }
-    );
-
-    if (!updated) return res.status(404).json({ message: 'Rating not found' });
+    await existingRating.update({ rating, comment });
 
     const updatedRating = await Rating.findByPk(id);
 
@@ -164,51 +174,24 @@ exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Find the rating
     const rating = await Rating.findByPk(id);
     if (!rating) {
       return res.status(404).json({ message: 'Rating not found' });
     }
 
-    const reviewee_id = rating.reviewee_id;
-    
-    const deleted = await Rating.destroy({ where: { id } });
+    // Soft delete: mark as inactive
+    await rating.update({ is_deleted: true });
 
-    if (!deleted) return res.status(404).json({ message: 'Rating not found' });
+    // Update provider's average rating excluding deleted ratings
+    await updateProviderRating(rating.reviewee_id);
 
-    // Update service provider's average rating after deletion
-    await updateProviderRating(reviewee_id);
-
-    return res.status(200).json({ message: 'Rating deleted successfully' });
+    return res.status(200).json({ message: 'Rating soft-deleted successfully' });
   } catch (error) {
-    console.error('Error deleting rating:', error);
+    console.error('Error soft deleting rating:', error);
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
 
-// Helper function to update provider's average rating
-async function updateProviderRating(providerId) {
-  try {
-    const ratings = await Rating.findAll({
-      where: { reviewee_id: providerId },
-      attributes: ['rating'],
-    });
+await updateProviderRating(reviewee_id);
 
-    if (ratings.length === 0) {
-      await ServiceProvider.update(
-        { rating: 0 },
-        { where: { id: providerId } }
-      );
-      return;
-    }
-
-    const totalRating = ratings.reduce((sum, r) => sum + r.rating, 0);
-    const averageRating = totalRating / ratings.length;
-
-    await ServiceProvider.update(
-      { rating: averageRating },
-      { where: { id: providerId } }
-    );
-  } catch (error) {
-    console.error('Error updating provider rating:', error);
-  }
-}

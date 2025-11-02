@@ -71,5 +71,19 @@ module.exports = (sequelize, DataTypes) => {
         updatedAt: 'updated_at',
     });
 
+    ServiceRequest.associate = (models) => {
+        // A request belongs to one user (the one who created it)
+        ServiceRequest.belongsTo(models.User, {
+            foreignKey: 'user_id',
+            as: 'user',
+        });
+
+        // A request belongs to one provider (the one assigned to it)
+        ServiceRequest.belongsTo(models.ServiceProvider, {
+            foreignKey: 'provider_id',
+            as: 'provider',
+        });
+    };
+
     return ServiceRequest;
 };

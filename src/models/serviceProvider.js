@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        firebaseUid: {
+        firebase_uid: {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
@@ -71,6 +71,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.ARRAY(DataTypes.FLOAT),
             comment: '[longitude, latitude]',
         },
+        is_deleted: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+
     }, {
         tableName: 'service_providers',
         timestamps: true,

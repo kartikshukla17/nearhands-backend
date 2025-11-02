@@ -44,6 +44,11 @@ module.exports = (sequelize, DataTypes) => {
       comment: {
         type: DataTypes.TEXT,
       },
+      is_deleted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+
     },
     {
       tableName: 'ratings',
@@ -60,6 +65,9 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'job_id',
       as: 'job',
     });
+    Rating.belongsTo(models.User, { foreignKey: 'reviewer_id', as: 'reviewer' });
+    Rating.belongsTo(models.ServiceProvider, { foreignKey: 'reviewee_id', as: 'reviewee' });
+
 
     // No strict foreign key for reviewer/reviewee because they can belong to either table
     // You’ll handle logic in your backend using reviewer_type / reviewee_type
