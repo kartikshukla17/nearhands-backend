@@ -1,23 +1,31 @@
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
-// Make sure Firebase admin is initialized earlier in your app
-// (with service account JSON or env credentials)
+if (!admin.apps.length) {
+  // Initialize Firebase Admin only once
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    }),
+  });
+}
 
-module.exports = async (req, res, next) => {
+const verifyFirebaseToken = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const token = req.headers.authorization?.split("Bearer ")[1];
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Unauthorized: Missing token' });
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
     }
 
-    const token = authHeader.split(' ')[1];
     const decodedToken = await admin.auth().verifyIdToken(token);
-
-    req.user = decodedToken; // { uid, email, ... }
+    req.user = decodedToken; // attach user data to request object
     next();
   } catch (error) {
-    console.error('Firebase auth error:', error);
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    console.error("Error verifying Firebase token:", error);
+    return res.status(401).json({ message: "Unauthorized: Invalid or expired token" });
   }
 };
+
+module.exports = verifyFirebaseToken;
