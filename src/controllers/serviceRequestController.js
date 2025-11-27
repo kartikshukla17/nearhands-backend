@@ -16,10 +16,10 @@ exports.create = async (req, res) => {
     } = req.body;
 
     // Firebase UID comes from middleware (decoded token)
-    const firebase_uid = req.user.uid;
+    const firebaseUid = req.user.uid;
 
     // Get the user from firebase UID
-    const user = await User.findOne({ where: { firebase_uid: firebase_uid } });
+    const user = await User.findOne({ where: { firebaseUid: firebaseUid } });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -101,10 +101,10 @@ exports.getById = async (req, res) => {
 // Get service requests by user (GET /api/requests/user/me)
 exports.getByUser = async (req, res) => {
   try {
-    const firebase_uid = req.user.uid;
+    const firebaseUid = req.user.uid;
 
     // Get the user from firebase UID
-    const user = await User.findOne({ where: { firebase_uid: firebase_uid } });
+    const user = await User.findOne({ where: { firebaseUid: firebaseUid } });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

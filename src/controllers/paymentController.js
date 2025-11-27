@@ -138,15 +138,15 @@ exports.delete = async (req, res) => {
 // Get current user's payments (GET /api/payments/me)
 exports.getMyPayments = async (req, res) => {
   try {
-    const firebase_uid = req.user.uid;
+    const firebaseUid = req.user.uid;
 
-    let actor = await User.findOne({ where: { firebase_uid } });
+    let actor = await User.findOne({ where: { firebaseUid } });
     let whereClause = {};
 
     if (actor) {
       whereClause.user_id = actor.id;
     } else {
-      actor = await ServiceProvider.findOne({ where: { firebase_uid } });
+      actor = await ServiceProvider.findOne({ where: { firebaseUid } });
       if (!actor) return res.status(404).json({ message: 'Account not found' });
       whereClause.provider_id = actor.id;
     }

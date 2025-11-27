@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const providerController = require('../controllers/providerController');
-const verifyFirebaseToken = require('../middlewares/verifyFirebaseToken');
+const providerController = require('../controllers/serviceProviderController');
+const verifyFirebaseToken = require('../middleware/verifyFirebaseToken.js');
 
 router.post('/', verifyFirebaseToken, providerController.create);
 router.get('/', providerController.getAll);

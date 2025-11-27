@@ -18,16 +18,16 @@ exports.create = async (req, res) => {
     } = req.body;
     
     // Firebase UID comes from middleware (decoded token)
-    const firebase_uid = req.user.uid;
+    const firebaseUid = req.user.uid;
     
     // Check if provider already exists
-    const existing = await ServiceProvider.findOne({ where: { firebase_uid } });
+    const existing = await ServiceProvider.findOne({ where: { firebaseUid } });
     if (existing) {
       return res.status(200).json({ message: 'Provider already exists', provider: existing });
     }
     
     const provider = await ServiceProvider.create({
-      firebase_uid,
+      firebaseUid,
       name,
       email,
       phone,
@@ -213,8 +213,8 @@ exports.delete = async (req, res) => {
 // Get current provider profile (GET /api/providers/me)
 exports.getProfile = async (req, res) => {
   try {
-    const firebase_uid = req.user.uid;
-    const provider = await ServiceProvider.findOne({ where: { firebase_uid } });
+    const firebaseUid = req.user.uid;
+    const provider = await ServiceProvider.findOne({ where: { firebaseUid } });
     if (!provider) return res.status(404).json({ message: 'Provider not found' });
     return res.status(200).json(provider);
   } catch (error) {

@@ -15,11 +15,11 @@ app.use(morgan("dev"));
 
 //  Import Routes
 
-const userRoutes = require("./routes/userRoutes");
-// const providerRoutes = require("./routes/serviceProviderRoutes");
-// const serviceRequestRoutes = require("./routes/serviceRequestRoutes");
-// const paymentRoutes = require("./routes/paymentRoutes");
-// const ratingRoutes = require("./routes/ratingRoutes");
+const userRoutes = require("./src/routes/userRoutes.js");
+const providerRoutes = require("./src/routes/serviceProviderRoutes.js");
+const serviceRequestRoutes = require("./src/routes/serviceRequestRoutes.js");
+const paymentRoutes = require("./src/routes/paymentRoutes.js");
+const ratingRoutes = require("./src/routes/ratingRoutes.js");
 
 
 //  Health Check
@@ -32,10 +32,10 @@ app.get("/", (req, res) => {
 //  Mount Routes
 
 app.use("/api/users", userRoutes);
-// app.use("/api/providers", providerRoutes);
-// app.use("/api/service-requests", serviceRequestRoutes);
-// app.use("/api/payments", paymentRoutes);
-// app.use("/api/ratings", ratingRoutes);
+app.use("/api/providers", providerRoutes);
+app.use("/api/service-requests", serviceRequestRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/ratings", ratingRoutes);
 
 
 // Global Error Handler 

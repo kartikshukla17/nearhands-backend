@@ -7,16 +7,16 @@ exports.create = async (req, res) => {
     const { name, email, phone, location_coordinates } = req.body;
 
     // Firebase UID comes from middleware (decoded token)
-    const firebase_uid = req.user.uid;
+    const firebaseUid = req.user.uid;
 
     // Check if user already exists
-    const existing = await User.findOne({ where: { firebase_uid } });
+    const existing = await User.findOne({ where: { firebaseUid } });
     if (existing) {
       return res.status(200).json({ message: 'User already exists', user: existing });
     }
 
     const user = await User.create({
-      firebase_uid,
+      firebaseUid,
       name,
       email,
       phone,
@@ -90,8 +90,8 @@ exports.delete = async (req, res) => {
 // Get current user profile (GET /api/users/me)
 exports.getProfile = async (req, res) => {
   try {
-    const firebase_uid = req.user.uid;
-    const user = await User.findOne({ where: { firebase_uid } });
+    const firebaseUid = req.user.uid;
+    const user = await User.findOne({ where: { firebaseUid } });
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 

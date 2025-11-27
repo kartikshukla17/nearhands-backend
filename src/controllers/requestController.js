@@ -7,7 +7,7 @@ exports.acceptRequest = async (req, res) => {
 
     // Fetch provider by UID
     const provider = await ServiceProvider.findOne({
-      where: { firebase_uid: firebaseUid }
+      where: { firebaseUid: firebaseUid }
     });
 
     if (!provider) {
@@ -58,7 +58,7 @@ exports.declineRequest = async (req, res) => {
     const firebaseUid = req.user.uid;
 
     const provider = await ServiceProvider.findOne({
-      where: { firebase_uid: firebaseUid }
+      where: { firebaseUid: firebaseUid }
     });
 
     if (!provider) return res.status(404).json({ message: 'Provider not found' });

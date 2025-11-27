@@ -7,13 +7,13 @@ exports.create = async (req, res) => {
     const { job_id, reviewee_id, rating, comment } = req.body;
 
     // Firebase UID comes from middleware (decoded token)
-    const firebase_uid = req.user.uid;
+    const firebaseUid = req.user.uid;
 
     // Get the user (reviewer) from firebase UID
-    let reviewer = await User.findOne({ where: { firebase_uid: firebase_uid } });
+    let reviewer = await User.findOne({ where: { firebaseUid: firebaseUid } });
     let reviewer_type = 'user';
     if (!reviewer) {
-      reviewer = await ServiceProvider.findOne({ where: { firebase_uid: firebase_uid } });
+      reviewer = await ServiceProvider.findOne({ where: { firebaseUid: firebaseUid } });
       reviewer_type = 'provider';
     }
     if (!reviewer) {
@@ -193,5 +193,4 @@ exports.delete = async (req, res) => {
   }
 };
 
-await updateProviderRating(reviewee_id);
 

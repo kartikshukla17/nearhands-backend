@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        firebase_uid: {
+        firebaseUid: {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
@@ -77,11 +77,8 @@ module.exports = (sequelize, DataTypes) => {
         },
 
     }, {
-        tableName: 'service_providers',
+        tableName: 'ServiceProviders',
         timestamps: true,
-        underscored: true,
-        createdAt: 'created_at',
-        updatedAt: 'updated_at',
     });
 
     ServiceProvider.associate = (models) => {

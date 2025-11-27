@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const requestController = require('../controllers/requestController');
-const verifyFirebaseToken = require('../middlewares/verifyFirebaseToken');
+const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
 
 // Provider accepts a job
 router.post('/:id/accept', verifyFirebaseToken, requestController.acceptRequest);
